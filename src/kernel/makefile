@@ -12,22 +12,12 @@ ifeq ($(KERNOBJDIR),)
 KERNOBJDIR := $(KERNBUILDDIR)/obj
 endif
 
-KERNC = \
-	  $(wildcard drivers/*/*.c) \
-	  $(wildcard *.c)
-
-KERNCPP = \
-		$(wildcard drivers/*/*.cpp) \
-		$(wildcard *.cpp)
-
 KERNASM = \
-		$(wildcard drivers/*/*.asm) \
-		$(wildcard *.asm)
+		$(wildcard *.asm) \
+		$(wildcard addition/*.asm)
 
 KERNOBJ = \
-		$(patsubst %.c, %.o, $(KERNC)) \
-		$(patsubst %.asm, %.s.o, $(KERNASM)) \
-		$(patsubst %.cpp, %.o, $(KERNCPP))
+		$(patsubst %.asm, %.o, $(KERNASM))
 
 KOBJF = $(KERNOBJ:%=$(KERNOBJDIR)/%)
 
@@ -42,21 +32,14 @@ AFLAGS =-f elf32
 all: \
 	kernel.bin
 
-%.s.o: %.asm
+%.o: %.asm
 	@$(MKDIR) $(KERNOBJDIR)/$(@D)
 	@$(ECHO) "[ASM   ]" $(KERNOBJDIR)/$@
 	@$(ASM) $< $(AFLAGS) -o $(KERNOBJDIR)/$@
-%.o: %.c
-	@$(MKDIR) $(KERNOBJDIR)/$(@D)
-	@$(ECHO) "[C     ]" $(KERNOBJDIR)/$@
-	@$(CC) $(CCFLAGS) -c -o $(KERNOBJDIR)/$@ $<
-%.o: %.cpp
-	@$(MKDIR) $(KERNOBJDIR)/$(@D)
-	@$(ECHO) "[CPP   ]" $(KERNOBJDIR)/$@
-	@$(CC) $(CPPFLAGS) -c -o $(KERNOBJDIR)/$@ $<
 
 kernel.bin: linker.ld $(KERNOBJ)
 	@$(ECHO) "[LD    ]" $(KERNBUILDDIR)/$@
+	@$(ECHO) "[\033[0;31mDEBUG \033[0;37m] Obj file: " $(KERNOBJ)
 	@ld -m elf_i386 -T$< --oformat binary -o $(KERNBUILDDIR)/$@ $(KOBJF)
 	@size=$$(stat -L -c %s $(KERNBUILDDIR)/$@);\
 	newsize=$$(expr $$size - $$(expr $$size % 512) + 512);\
