@@ -1,0 +1,1 @@
+BINFILE=$(wildcard build/*/*.bin)
